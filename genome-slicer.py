@@ -90,7 +90,7 @@ def parse_args():
 def main(): 
     query_path, db_path, task, output_path = parse_args()
     blastHandler = Blast(db_path, task)
-    data = blastHandler.blast(query_path)
+    data = blastHandler.blast(query_path, output_path)
     print(data)
 
 if __name__ == '__main__': 

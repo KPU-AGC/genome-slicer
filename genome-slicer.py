@@ -16,7 +16,7 @@ class Blast:
         blastdb_file = open(self.blastdb)
         data = blastdb_file.read()
         return data.count('>')
-    def blast(self, query): 
+    def blast(self, query, output_path): 
         #Generate the oligo temporary file
         args = [
             "blastn",
@@ -30,11 +30,11 @@ class Blast:
             "13",
             "-query",
             str(query),
+            "-out",
+            output_path.joinpath('output.json')
         ]
-        result = subprocess.run(args, capture_output=True)
-        decoded = result.stdout.decode('utf-8')
-        output = io.StringIO(decoded)
-        return output
+        subprocess.run(args)
+
     def multi_blast(self, oligos): 
         def job_allocator(oligos, NUM_GROUPS):
             list_size = floor(len(oligos)/NUM_GROUPS)

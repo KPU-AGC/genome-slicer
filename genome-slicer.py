@@ -107,6 +107,7 @@ def main():
     query_path, db_path, task, output_path, tag = parse_args()
     blastHandler = Blast(db_path, task)
     json_path = blastHandler.blast(query_path, output_path)
+    print(json_path)
     #open the json
     json_file = open(json_path, 'r')
     json_data = json.load(json_file)

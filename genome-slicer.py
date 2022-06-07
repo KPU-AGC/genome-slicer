@@ -20,17 +20,17 @@ class Blast:
         #Generate the oligo temporary file
         args = [
             "blastn",
-            "--task",
+            "-task",
             str(self.task),
-            "--db",
+            "-db",
             str(self.blastdb),
-            "--num_alignments",
+            "-num_alignments",
             str(self.blastdb_len),
-            "--outfmt",
+            "-outfmt",
             "13",
-            "--query",
+            "-query",
             str(query),
-            "--out",
+            "-out",
             output_path.joinpath('output.json')
         ]
         subprocess.run(args)

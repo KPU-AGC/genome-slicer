@@ -52,7 +52,7 @@ class Blast:
         return results
 
 def parse_args(): 
-    parser = argparse.ArgumentParser('Extract the sequence from the BLAST results')
+    parser = argparse.ArgumentParser()
     parser.add_argument(
         'query_path',
         action='store',

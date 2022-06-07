@@ -82,7 +82,7 @@ def parse_args():
         default=None,
         help='',
     )
-    args = parse_args()
+    args = parser.parse_args()
     if not args.output_path:
         args.output_path = args.query_path.parent
     return args.query_path, args.db, args.task, args.output_path

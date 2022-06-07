@@ -110,7 +110,9 @@ def main():
     #open the json
     json_file = open(json_path, 'r')
     json_data = json.load(json_file)
+    print(json_data.keys())
     processed_data = []
+    print(json_data)
     for blast_hit in json_data['BlastOutput2']['report']['results']['search']['hits']:
         #Main places to get the data from
         blast_description = blast_hit['description'][0]
@@ -131,8 +133,8 @@ def main():
         )
     json_file.close()
 
-    output_json_path = output_path.joinpath('output_json.json')
-    json_output(processed_data, output_json_path)
+    #output_json_path = output_path.joinpath('output_json.json')
+    json_output(processed_data, output_path)
 
 if __name__ == '__main__': 
     main() 

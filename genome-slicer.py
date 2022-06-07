@@ -5,6 +5,8 @@ import multiprocessing
 import argparse
 import pathlib
 import io
+import json
+import pprint
 
 class Blast: 
     def __init__(self, blastdb, task):
@@ -18,6 +20,7 @@ class Blast:
         return data.count('>')
     def blast(self, query, output_path): 
         #Generate the oligo temporary file
+        json_path = output_path.joinpath('output.json')
         args = [
             "blastn",
             "-task",
@@ -31,10 +34,10 @@ class Blast:
             "-query",
             str(query),
             "-out",
-            output_path.joinpath('output.json')
+            json_path
         ]
         subprocess.run(args)
-
+        return json_path
     def multi_blast(self, oligos): 
         def job_allocator(oligos, NUM_GROUPS):
             list_size = floor(len(oligos)/NUM_GROUPS)
@@ -82,16 +85,54 @@ def parse_args():
         default=None,
         help='',
     )
+    parser.add_argument(
+        '--tag',
+        dest='tag',
+        action='store',
+        type=str,
+        default='',
+    )
     args = parser.parse_args()
     if not args.output_path:
         args.output_path = args.query_path.parent
-    return args.query_path, args.db, args.task, args.output_path
+    return args.query_path, args.db, args.task, args.output_path, args.tag
+
+def json_output(data, output_path): 
+    # write to screened JSON file
+    prettied_json =  pprint.pformat(data, compact=True, sort_dicts=False, width=160).replace("'", '"')
+    with open(output_path.joinpath(f'output_json.json'), 'w') as new_JSON:
+        new_JSON.write(prettied_json)
 
 def main(): 
-    query_path, db_path, task, output_path = parse_args()
+    query_path, db_path, task, output_path, tag = parse_args()
     blastHandler = Blast(db_path, task)
-    data = blastHandler.blast(query_path, output_path)
-    print(data)
+    json_path = blastHandler.blast(query_path, output_path)
+    #open the json
+    json_file = open(json_path, 'r')
+    json_data = json.load(json_file)
+    processed_data = []
+    for blast_hit in json_data['BlastOutput2']['report']['results']['search']['hits']:
+        #Main places to get the data from
+        blast_description = blast_hit['description'][0]
+        blast_hsp = blast_hit['hsps'][0]
+        #All of the important fields
+        accession = blast_description['accession']
+        sequence = blast_hsp['hseq']
+        taxid = blast_description['taxid']
+        sciname = blast_description['sciname']
+        processed_data.append(
+            {
+                'accession':accession,
+                'sequence':sequence,
+                'taxid':taxid,
+                'sciname':sciname,
+                'gene':tag
+            }
+        )
+    json_file.close()
+
+    output_json_path = output_path.joinpath('output_json.json')
+    json_output(processed_data, output_json_path)
 
 if __name__ == '__main__': 
     main() 

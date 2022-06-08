@@ -132,11 +132,20 @@ def get_processed_blast_data(blast_data):
         )
     return processed_data
 
+def output_fasta(blast_data, file_name): 
+    with open(f'{file_name}.fasta', 'r') as fasta_file:
+        for sequence in blast_data:
+            accession = sequence['accession']
+            taxid = sequence['taxid']
+            sci_name = sequence['sciname']
+            fasta_file.write(f'>{accession}_{taxid}_{sci_name}\n')
+            fasta_file.write(sequence['sequence']+'\n')
+
 def main(): 
     query_path, db_path, task, output_path, tag = parse_args()
     blastHandler = BlastHandler(db_path, task)
     #Run the BLAST jobs
-    blastHandler.blast(query_path, output_path)
+    blastHandler.blast(query_path, output_path, tag)
     #open the main json --> this shows you where the 
     #json_file = open(json_path, 'r')
     #json_data = json.load(json_file)
@@ -151,6 +160,8 @@ def main():
         output_dict[json_path.stem] = processed_data
     #output_json_path = output_path.joinpath('output_json.json')
     json_output(output_dict, output_path)
+    for key in output_dict: 
+        output_fasta(output_dict[key], key)
 
 if __name__ == '__main__': 
     main() 

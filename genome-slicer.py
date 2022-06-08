@@ -132,8 +132,9 @@ def get_processed_blast_data(blast_data):
         )
     return processed_data
 
-def output_fasta(blast_data, file_name): 
-    with open(f'{file_name}.fasta', 'r') as fasta_file:
+def output_fasta(blast_data, file_name, output_path): 
+    fasta_path = output_path.joinpath(f'{file_name}.fasta')
+    with open(fasta_path, 'r') as fasta_file:
         for sequence in blast_data:
             accession = sequence['accession']
             taxid = sequence['taxid']

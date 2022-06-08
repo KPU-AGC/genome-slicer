@@ -162,7 +162,7 @@ def main():
     #output_json_path = output_path.joinpath('output_json.json')
     json_output(output_dict, output_path)
     for key in output_dict: 
-        output_fasta(output_dict[key], key)
+        output_fasta(output_dict[key], key, output_path)
 
 if __name__ == '__main__': 
     main() 

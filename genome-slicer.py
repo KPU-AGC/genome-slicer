@@ -139,8 +139,9 @@ def output_fasta(blast_data, file_name, output_path):
             accession = sequence['accession']
             taxid = sequence['taxid']
             sci_name = sequence['sciname']
+            ungap_sequence = sequence['sequence'].replace('-','')
             fasta_file.write(f'>{accession}_{taxid}_{sci_name}\n')
-            fasta_file.write(sequence['sequence']+'\n')
+            fasta_file.write(f'{ungap_sequence}\n')
 
 def main(): 
     query_path, db_path, task, output_path, tag = parse_args()

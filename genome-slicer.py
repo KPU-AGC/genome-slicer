@@ -8,7 +8,7 @@ import io
 import json
 import pprint
 
-class Blast: 
+class BlastHandler: 
     def __init__(self, blastdb, task):
         self.blastdb = blastdb
         self.blastdb_len = self._get_blastdb_len()
@@ -18,9 +18,9 @@ class Blast:
         blastdb_file = open(self.blastdb)
         data = blastdb_file.read()
         return data.count('>')
-    def blast(self, query, output_path): 
+    def blast(self, query, output_path, tag): 
         #Generate the oligo temporary file
-        json_path = output_path.joinpath('output.json')
+        json_path = output_path.joinpath(f'{tag}_blast-output.json')
         args = [
             "blastn",
             "-task",
@@ -37,18 +37,17 @@ class Blast:
             json_path
         ]
         subprocess.run(args)
-        return json_path
-    def multi_blast(self, oligos): 
-        def job_allocator(oligos, NUM_GROUPS):
-            list_size = floor(len(oligos)/NUM_GROUPS)
-            remainder = len(oligos)%NUM_GROUPS
+    def multi_blast(self, queries): 
+        def job_allocator(queries, NUM_GROUPS):
+            list_size = floor(len(queries)/NUM_GROUPS)
+            remainder = len(queries)%NUM_GROUPS
             job_list = []
             for group in range(NUM_GROUPS-1): 
-                job_list.append(oligos[0+(list_size*group):list_size+(list_size*group)])
-            job_list.append(oligos[(list_size*(NUM_GROUPS-1)):(list_size*NUM_GROUPS+remainder)])
+                job_list.append(queries[0+(list_size*group):list_size+(list_size*group)])
+            job_list.append(queries[(list_size*(NUM_GROUPS-1)):(list_size*NUM_GROUPS+remainder)])
             return job_list
         #Allocate the jobs
-        job_list = job_allocator(oligos, self.NUM_POOL)
+        job_list = job_allocator(queries, self.NUM_POOL)
         #Run the BLAST
         pool = multiprocessing.Pool(self.NUM_POOL)
         results = pool.map(self.blast, job_list)
@@ -103,22 +102,22 @@ def json_output(data, output_path):
     with open(output_path.joinpath(f'output_json.json'), 'w') as new_JSON:
         new_JSON.write(prettied_json)
 
-def main(): 
-    query_path, db_path, task, output_path, tag = parse_args()
-    blastHandler = Blast(db_path, task)
-    json_path = blastHandler.blast(query_path, output_path)
-    print(json_path)
-    #open the json
-    json_file = open(json_path, 'r')
-    json_data = json.load(json_file)
-    print(json_data.keys())
+def get_json_output_list(query_path, result_path, tag): 
+    with open(query_path, 'r') as query_file:
+        num_seq = query_file.read().count('>')
+    list_json_path = []
+    for index in range(num_seq):
+        json_path = result_path.joinpath(f'{tag}_blast-output_{index+1}.json')
+        list_json_path.append(json_path)
+    return list_json_path
+
+def get_processed_blast_data(blast_data):
     processed_data = []
-    print(json_data)
-    for blast_hit in json_data['BlastOutput2']['report']['results']['search']['hits']:
+    for blast_hit in blast_data['BlastOutput2']['report']['results']['search']['hits']:
         #Main places to get the data from
         blast_description = blast_hit['description'][0]
         blast_hsp = blast_hit['hsps'][0]
-        #All of the important fields
+        #All of the important fields  
         accession = blast_description['accession']
         sequence = blast_hsp['hseq']
         taxid = blast_description['taxid']
@@ -129,13 +128,29 @@ def main():
                 'sequence':sequence,
                 'taxid':taxid,
                 'sciname':sciname,
-                'gene':tag
             }
         )
-    json_file.close()
+    return processed_data
 
+def main(): 
+    query_path, db_path, task, output_path, tag = parse_args()
+    blastHandler = BlastHandler(db_path, task)
+    #Run the BLAST jobs
+    blastHandler.blast(query_path, output_path)
+    #open the main json --> this shows you where the 
+    #json_file = open(json_path, 'r')
+    #json_data = json.load(json_file)
+    #Note that the output files are going to be
+    #tag_blast-output_#.json
+    output_dict = {}
+    list_json_output = get_json_output_list(query_path, output_path, tag)
+    for json_path in list_json_output:
+        with open(json_path, 'r') as json_file:
+            blast_data = json.load(json_file)
+            processed_data = get_processed_blast_data(blast_data)
+        output_dict[json_path.stem] = processed_data
     #output_json_path = output_path.joinpath('output_json.json')
-    json_output(processed_data, output_path)
+    json_output(output_dict, output_path)
 
 if __name__ == '__main__': 
     main() 

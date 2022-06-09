@@ -116,6 +116,7 @@ def get_processed_blast_data(blast_data):
     for blast_hit in blast_data['BlastOutput2']['report']['results']['search']['hits']:
         #Main places to get the data from
         blast_description = blast_hit['description'][0]
+        print(blast_description)
         blast_hsp = blast_hit['hsps'][0]
         #All of the important fields  
         accession = blast_description['accession']

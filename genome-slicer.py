@@ -118,18 +118,20 @@ def get_processed_blast_data(blast_data):
         blast_description = blast_hit['description'][0]
         print(blast_description)
         blast_hsp = blast_hit['hsps'][0]
-        #All of the important fields  
-        accession = blast_description['accession']
-        sequence = blast_hsp['hseq']
-        taxid = blast_description['taxid']
-        sciname = blast_description['sciname']
+        #Try to access all of the fields
+        fields = ('accession', 'taxid', 'sciname')
+        data = {}
+        for field in fields: 
+            try: 
+                data_entry = blast_description[field]
+            except KeyError:
+                data_entry = 'N/A'
+                print(f'Missing data: {field}\nConsider remaking blastdb w/ updated taxdb')
+            finally: 
+                data[field] = data_entry
+        data['sequence'] = blast_hsp['hseq']
         processed_data.append(
-            {
-                'accession':accession,
-                'sequence':sequence,
-                'taxid':taxid,
-                'sciname':sciname,
-            }
+            data
         )
     return processed_data
 

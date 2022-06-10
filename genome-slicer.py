@@ -143,7 +143,7 @@ def output_fasta(blast_data, file_name, output_path):
             taxid = sequence['taxid']
             sci_name = sequence['sciname'].replace(' ', '-')
             ungap_sequence = sequence['sequence'].replace('-','')
-            fasta_file.write(f'>{accession}_{taxid}_{sci_name}\n')
+            fasta_file.write(f'>{sci_name}_{taxid}_{accession}\n')
             fasta_file.write(f'{ungap_sequence}\n')
 
 def main(): 

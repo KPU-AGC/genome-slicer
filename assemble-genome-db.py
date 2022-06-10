@@ -81,9 +81,7 @@ class NCBIDataHandler():
                 taxid = data[1]
                 for gb_accession in accessions[accession]:
                     output_file.write(f'{gb_accession}\t{taxid}\n')
-
         
-
 def parse_args(): 
     parser = argparse.ArgumentParser('Program to process NCBI datasets')
     parser.add_argument(
@@ -119,7 +117,6 @@ def main():
     #for item in ncbi_data.assembly_data: 
     #   print(item.keys())
     ncbi_data.generate_taxid_map(output_path)
-
 
 if __name__ == '__main__': 
     main()

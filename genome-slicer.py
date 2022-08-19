@@ -91,10 +91,15 @@ def parse_args():
         type=str,
         default='',
     )
+    parser.add_argument(
+        '--use_name',
+        dest='name',
+        action='store_true',
+    )
     args = parser.parse_args()
     if not args.output_path:
         args.output_path = args.query_path.parent
-    return args.query_path, args.db, args.task, args.output_path, args.tag
+    return args.query_path, args.db, args.task, args.output_path, args.tag, args.name
 
 def json_output(data, output_path): 
     # write to screened JSON file
@@ -111,7 +116,7 @@ def get_json_output_list(query_path, result_path, tag):
         list_json_path.append(json_path)
     return list_json_path
 
-def get_processed_blast_data(blast_data):
+def get_processed_blast_data(blast_data, use_names):
     processed_data = []
     for blast_hit in blast_data['BlastOutput2']['report']['results']['search']['hits']:
         #Main places to get the data from
@@ -119,35 +124,46 @@ def get_processed_blast_data(blast_data):
         print(blast_description)
         blast_hsp = blast_hit['hsps'][0]
         #Try to access all of the fields
-        fields = ('accession', 'taxid', 'sciname')
         data = {}
-        for field in fields: 
-            try: 
-                data_entry = blast_description[field]
-            except KeyError:
-                data_entry = 'N/A'
-                print(f'Missing data: {field}\nConsider remaking blastdb w/ updated taxdb')
-            finally: 
-                data[field] = data_entry
+
+        if use_names is True: 
+            fields = ('accession', 'taxid', 'sciname')
+            for field in fields: 
+                try: 
+                    data_entry = blast_description[field]
+                except KeyError:
+                    data_entry = 'N/A'
+                    print(f'Missing data: {field}\nConsider remaking blastdb w/ updated taxdb')
+                finally: 
+                    data[field] = data_entry
+        else: 
+            data['id'] = blast_description['title'].split(' ')[0]
         data['sequence'] = blast_hsp['hseq']
         processed_data.append(
             data
         )
     return processed_data
 
-def output_fasta(blast_data, file_name, output_path): 
+def output_fasta(blast_data, file_name, output_path, use_names): 
     fasta_path = output_path.joinpath(f'{file_name}.fasta')
     with open(fasta_path, 'w') as fasta_file:
-        for sequence in blast_data:
-            accession = sequence['accession']
-            taxid = sequence['taxid']
-            sci_name = sequence['sciname'].replace(' ', '-')
-            ungap_sequence = sequence['sequence'].replace('-','')
-            fasta_file.write(f'>{sci_name}_{taxid}_{accession}\n')
-            fasta_file.write(f'{ungap_sequence}\n')
+        if use_names is True: 
+            for sequence in blast_data:
+                accession = sequence['accession']
+                taxid = sequence['taxid']
+                sci_name = sequence['sciname'].replace(' ', '-')
+                ungap_sequence = sequence['sequence'].replace('-','')
+                fasta_file.write(f'>{sci_name}_{taxid}_{accession}\n')
+                fasta_file.write(f'{ungap_sequence}\n')
+        else: 
+            for sequence in blast_data: 
+                seq_id = sequence['id']
+                ungap_sequence = sequence['sequence'].replace('-','')
+                fasta_file.write(f'>{seq_id}\n')
+                fasta_file.write(f'{ungap_sequence}\n')
 
 def main(): 
-    query_path, db_path, task, output_path, tag = parse_args()
+    query_path, db_path, task, output_path, tag, use_names = parse_args()
     blastHandler = BlastHandler(db_path, task)
     #Run the BLAST jobs
     blastHandler.blast(query_path, output_path, tag)
@@ -161,12 +177,12 @@ def main():
     for json_path in list_json_output:
         with open(json_path, 'r') as json_file:
             blast_data = json.load(json_file)
-            processed_data = get_processed_blast_data(blast_data)
+            processed_data = get_processed_blast_data(blast_data, use_names)
         output_dict[json_path.stem] = processed_data
     #output_json_path = output_path.joinpath('output_json.json')
     json_output(output_dict, output_path)
     for key in output_dict: 
-        output_fasta(output_dict[key], key, output_path)
+        output_fasta(output_dict[key], key, output_path, use_names)
 
 if __name__ == '__main__': 
     main() 

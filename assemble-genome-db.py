@@ -105,17 +105,6 @@ def main():
     # 
     ncbi_path, output_path = parse_args()
     ncbi_data = NCBIDataHandler(ncbi_path)
-    #for child in ncbi_data.base_path.iterdir(): 
-    #    print(child)
-    #print(type(ncbi_data.dataset_catalog['assemblies']))
-    #for entry in ncbi_data.dataset_catalog['assemblies']: 
-    #   print(entry)
-    #print('DATASET CATALOG')
-    #print(ncbi_data.dataset_catalog)
-    #print('ASSEMBLY_DATA')
-    #print(ncbi_data.assembly_data)
-    #for item in ncbi_data.assembly_data: 
-    #   print(item.keys())
     ncbi_data.generate_taxid_map(output_path)
 
 if __name__ == '__main__': 
